@@ -14,6 +14,8 @@ import android.view.View
 import android.widget.EditText
 import android.widget.TextView
 
+const val LOG_PREFIX = "No2BLE"
+
 class DisplayMessageActivity : AppCompatActivity() {
 
     // Variable for storing instance of our service class
@@ -40,7 +42,7 @@ class DisplayMessageActivity : AppCompatActivity() {
      */
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, iBinder: IBinder) {
-            Log.d("mTAG", "ServiceConnection: connected to service.")
+            Log.d(LOG_PREFIX, "ServiceConnection: connected to service.")
             // We've bound to MyService, cast the IBinder and get MyBinder instance
             val binder = iBinder as BleUtilOp.MyBinder
             mService = binder.service
@@ -49,7 +51,7 @@ class DisplayMessageActivity : AppCompatActivity() {
         }
 
         override fun onServiceDisconnected(arg0: ComponentName) {
-            Log.d("mTAG", "ServiceConnection: disconnected from service.")
+            Log.d(LOG_PREFIX, "ServiceConnection: disconnected from service.")
             mIsBound = false
             mBleDataWorker = null
         }
@@ -172,7 +174,7 @@ class DisplayMessageActivity : AppCompatActivity() {
             }
 
             mainHandler.postDelayed(this, 2000)
-            Log.w("User message: ", "handler-run()")
+            Log.w(LOG_PREFIX, "User message: handler-run()")
         }
     }
 
@@ -186,7 +188,7 @@ class DisplayMessageActivity : AppCompatActivity() {
             unbindService()
         }
 
-        Log.w("User message: ", "onDestroy()")
+        Log.w(LOG_PREFIX, "User message: onDestroy()")
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -217,7 +219,7 @@ class DisplayMessageActivity : AppCompatActivity() {
         mainHandler = Handler(Looper.getMainLooper())
         mainHandler.post(updateTextTask)
 
-        Log.w("User message: ", "onCreate()")
+        Log.w(LOG_PREFIX, "User message: onCreate()")
 
         /* modify the AndroidManifest.xml so that it contains parentActivityName:
         <activity

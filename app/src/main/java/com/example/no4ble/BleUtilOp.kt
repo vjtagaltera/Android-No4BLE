@@ -197,7 +197,7 @@ class BleUtilOp : Service() {
                     }
                     wkr.add_ble_device(dev_addr, vnam, vuuid, vrssi,
                                         target_uuid_service, result.device)
-                    Log.i("ScanCallback",
+                    Log.i(LOG_PREFIX, "ScanCallback: " +
                         "Found BLE device! Address: ${dev_addr}, " +
                                 "Name: ${vnam}, " +
                                 "RSSI: ${vrssi}, " +
@@ -224,17 +224,19 @@ class BleUtilOp : Service() {
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
-                    Log.w("BluetoothGattCallback", "Successfully connected to $deviceAddress")
+                    Log.w(LOG_PREFIX,
+                        "BluetoothGattCallback: Successfully connected to $deviceAddress")
                     // TODO: Store a reference to BluetoothGatt
                     connect_gatt = gatt
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                    Log.w("BluetoothGattCallback", "Successfully disconnected from $deviceAddress")
+                    Log.w(LOG_PREFIX,
+                        "BluetoothGattCallback: Successfully disconnected from $deviceAddress")
                     gatt.close()
                     connect_gatt = null
                 }
             } else {
-                Log.e(
-                    "BluetoothGattCallback",
+                Log.e(LOG_PREFIX,
+                    "BluetoothGattCallback: " +
                     "Error $status encountered for $deviceAddress! Disconnecting..."
                 )
                 /* seen the infamous 133 error:
@@ -248,8 +250,8 @@ class BleUtilOp : Service() {
 
         private fun BluetoothGatt.printGattTable() {
             if (services.isEmpty()) {
-                Log.i(
-                    "printGattTable",
+                Log.i(LOG_PREFIX,
+                    "printGattTable: " +
                     "No service and characteristic available, call discoverServices() first?"
                 )
                 return
@@ -259,8 +261,8 @@ class BleUtilOp : Service() {
                     separator = "\n|--",
                     prefix = "|--"
                 ) { it.uuid.toString() }
-                Log.i(
-                    "printGattTable",
+                Log.i(LOG_PREFIX,
+                    "printGattTable: " +
                     "\nService ${service.uuid}\nCharacteristics:\n$characteristicsTable"
                 )
             }
@@ -268,8 +270,8 @@ class BleUtilOp : Service() {
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             with(gatt) {
-                Log.w(
-                    "BluetoothGattCallback",
+                Log.w(LOG_PREFIX,
+                    "BluetoothGattCallback: " +
                     "Discovered ${services.size} services for ${device.address}"
                 )
                 printGattTable() // See implementation just above this section
@@ -281,14 +283,14 @@ class BleUtilOp : Service() {
         override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 service_mtu = mtu
-                Log.w(
-                    "Ble MTU: ",
+                Log.w(LOG_PREFIX,
+                    "Ble MTU: " +
                     "ATT MTU changed to $mtu, success: " +
                             "${status == BluetoothGatt.GATT_SUCCESS}"
                 )
             } else {
-                Log.e(
-                    "Ble MTU: ",
+                Log.e(LOG_PREFIX,
+                    "Ble MTU: " +
                     "ATT MTU failed to change to $mtu, success: " +
                             "${status == BluetoothGatt.GATT_SUCCESS}"
                 )
@@ -309,17 +311,18 @@ class BleUtilOp : Service() {
             with(characteristic) {
                 when (status) {
                     BluetoothGatt.GATT_SUCCESS -> {
-                        Log.i(
-                            "BluetoothGattCallback",
+                        Log.i(LOG_PREFIX,
+                            "BluetoothGattCallback: " +
                             "Read characteristic $uuid:\n${value.toHexString()}"
                         )
                     }
                     BluetoothGatt.GATT_READ_NOT_PERMITTED -> {
-                        Log.e("BluetoothGattCallback", "Read not permitted for $uuid!")
+                        Log.e(LOG_PREFIX,
+                            "BluetoothGattCallback: Read not permitted for $uuid!")
                     }
                     else -> {
-                        Log.e(
-                            "BluetoothGattCallback",
+                        Log.e(LOG_PREFIX,
+                            "BluetoothGattCallback: " +
                             "Characteristic read failed for $uuid, error: $status"
                         )
                     }
@@ -335,16 +338,22 @@ class BleUtilOp : Service() {
             with(characteristic) {
                 when (status) {
                     BluetoothGatt.GATT_SUCCESS -> {
-                        Log.i("BluetoothGattCallback", "Wrote to characteristic $uuid | value: ${value.toHexString()}")
+                        Log.i(LOG_PREFIX,
+                            "BluetoothGattCallback: " +
+                            "Wrote to characteristic $uuid | value: ${value.toHexString()}")
                     }
                     BluetoothGatt.GATT_INVALID_ATTRIBUTE_LENGTH -> {
-                        Log.e("BluetoothGattCallback", "Write exceeded connection ATT MTU!")
+                        Log.e(LOG_PREFIX,
+                            "BluetoothGattCallback: Write exceeded connection ATT MTU!")
                     }
                     BluetoothGatt.GATT_WRITE_NOT_PERMITTED -> {
-                        Log.e("BluetoothGattCallback", "Write not permitted for $uuid!")
+                        Log.e(LOG_PREFIX,
+                            "BluetoothGattCallback: Write not permitted for $uuid!")
                     }
                     else -> {
-                        Log.e("BluetoothGattCallback", "Characteristic write failed for $uuid, error: $status")
+                        Log.e(LOG_PREFIX,
+                            "BluetoothGattCallback: " +
+                            "Characteristic write failed for $uuid, error: $status")
                     }
                 }
             }
@@ -354,8 +363,9 @@ class BleUtilOp : Service() {
                                              characteristic: BluetoothGattCharacteristic)
         {
             with(characteristic) {
-                Log.i("BluetoothGattCallback",
-                      "Characteristic $uuid changed | value: ${value.toHexString()}")
+                Log.i(LOG_PREFIX,
+                    "BluetoothGattCallback: " +
+                    "Characteristic $uuid changed | value: ${value.toHexString()}")
             }
         }
     }
@@ -393,7 +403,7 @@ class BleUtilOp : Service() {
         val userDataRdCharUuid = UUID.fromString( ble_data.getCharRd() )
         val conn_gatt = connect_gatt
         if ( conn_gatt == null ) {
-            Log.e("Ble data: ", "gatt null")
+            Log.e(LOG_PREFIX,"Ble data: gatt null")
             return
         }
         val uRdChar = conn_gatt
@@ -401,7 +411,7 @@ class BleUtilOp : Service() {
         if (uRdChar?.isReadable() == true) {
             conn_gatt.readCharacteristic(uRdChar)
         } else {
-            Log.e("Ble data: ", "gatt char null or non-readable")
+            Log.e(LOG_PREFIX,"Ble data: gatt char null or non-readable")
             return
         }
     }
@@ -428,7 +438,7 @@ class BleUtilOp : Service() {
         val userDataWrCharUuid = UUID.fromString( ble_data.getCharWr() )
         val conn_gatt = connect_gatt
         if ( conn_gatt == null ) {
-            Log.e("Ble data: ", "gatt null")
+            Log.e(LOG_PREFIX,"Ble data: gatt null")
             return
         }
         val uWrChar = conn_gatt
@@ -438,7 +448,7 @@ class BleUtilOp : Service() {
             var wr_data:ByteArray = ble_data.getCharWrData()
             writeCharacteristic(uWrChar, wr_data)
         } else {
-            Log.e("Ble data: ", "gatt char null or non-readable")
+            Log.e(LOG_PREFIX,"Ble data: gatt char null or non-readable")
             return
         }
     }
@@ -456,18 +466,24 @@ class BleUtilOp : Service() {
             characteristic.isIndicatable() -> BluetoothGattDescriptor.ENABLE_INDICATION_VALUE
             characteristic.isNotifiable() -> BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
             else -> {
-                Log.e("ConnectionManager", "${characteristic.uuid} doesn't support notifications/indications")
+                Log.e(LOG_PREFIX,
+                    "ConnectionManager: " +
+                    "${characteristic.uuid} doesn't support notifications/indications")
                 return
             }
         }
 
         characteristic.getDescriptor(cccdUuid)?.let { cccDescriptor ->
             if (connect_gatt?.setCharacteristicNotification(characteristic, true) == false) {
-                Log.e("ConnectionManager", "setCharacteristicNotification failed for ${characteristic.uuid}")
+                Log.e(LOG_PREFIX,
+                    "ConnectionManager: " +
+                    "setCharacteristicNotification failed for ${characteristic.uuid}")
                 return
             }
             writeDescriptor(cccDescriptor, payload)
-        } ?: Log.e("ConnectionManager", "${characteristic.uuid} doesn't contain the CCC descriptor!")
+        } ?: Log.e(LOG_PREFIX,
+            "ConnectionManager: " +
+            "${characteristic.uuid} doesn't contain the CCC descriptor!")
     }
 
     fun enable_user_notif() {
@@ -475,7 +491,7 @@ class BleUtilOp : Service() {
         val userDataRdCharUuid = UUID.fromString( ble_data.getCharRd() )
         val conn_gatt = connect_gatt
         if ( conn_gatt == null ) {
-            Log.e("Ble data: ", "gatt null")
+            Log.e(LOG_PREFIX,"Ble data: gatt null")
             return
         }
         val uRdChar = conn_gatt
@@ -483,13 +499,15 @@ class BleUtilOp : Service() {
         if ( uRdChar != null ) {
             enableNotifications(uRdChar)
         } else {
-            Log.e("Ble data: ", "read char null")
+            Log.e(LOG_PREFIX,"Ble data: read char null")
         }
     }
 
     fun disableNotifications(characteristic: BluetoothGattCharacteristic) {
         if (!characteristic.isNotifiable() && !characteristic.isIndicatable()) {
-            Log.e("ConnectionManager", "${characteristic.uuid} doesn't support indications/notifications")
+            Log.e(LOG_PREFIX,
+                "ConnectionManager: " +
+                "${characteristic.uuid} doesn't support indications/notifications")
             return
         }
 
@@ -497,11 +515,15 @@ class BleUtilOp : Service() {
         val cccdUuid = UUID.fromString( ble_data.getCharRdCCC() /*CCC_DESCRIPTOR_UUID*/)
         characteristic.getDescriptor(cccdUuid)?.let { cccDescriptor ->
             if (connect_gatt?.setCharacteristicNotification(characteristic, false) == false) {
-                Log.e("ConnectionManager", "setCharacteristicNotification failed for ${characteristic.uuid}")
+                Log.e(LOG_PREFIX,
+                    "ConnectionManager: " +
+                    "setCharacteristicNotification failed for ${characteristic.uuid}")
                 return
             }
             writeDescriptor(cccDescriptor, BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE)
-        } ?: Log.e("ConnectionManager", "${characteristic.uuid} doesn't contain the CCC descriptor!")
+        } ?: Log.e(LOG_PREFIX,
+            "ConnectionManager: " +
+            "${characteristic.uuid} doesn't contain the CCC descriptor!")
     }
 
 
@@ -516,12 +538,15 @@ class BleUtilOp : Service() {
     @Synchronized
     private fun doNextOperation() {
         if (pendingOperation != null) {
-            Log.e("ConnectionManager", "doNextOperation() called when an operation is pending! Aborting.")
+            Log.e(LOG_PREFIX,
+                "ConnectionManager: " +
+                "doNextOperation() called when an operation is pending! Aborting.")
             return
         }
 
         val operation = operationQueue.poll() ?: run {
-            Log.w("ConnectionManager", "Operation queue empty, returning")
+            Log.w(LOG_PREFIX,
+                "ConnectionManager: Operation queue empty, returning")
             return
         }
         pendingOperation = operation
@@ -537,7 +562,7 @@ class BleUtilOp : Service() {
 
     @Synchronized
     private fun signalEndOfOperation() {
-        Log.d("ConnectionManager", "End of $pendingOperation")
+        Log.d(LOG_PREFIX,"ConnectionManager: End of $pendingOperation")
         pendingOperation = null
         if (operationQueue.isNotEmpty()) {
             doNextOperation()
@@ -572,38 +597,38 @@ class BleUtilOp : Service() {
             state_current = state_new_init
 
         } else if ( state_tmp.state_idx == 1 ) {
-            Log.w("Ble scan: ", "BLE enabled ?")
+            Log.w(LOG_PREFIX, "Ble scan: BLE enabled ?")
             val state_new = BleStateType()
             if ( bluetoothAdapter.isEnabled ) {
                 state_new.state_idx = 2 // next state
                 state_tmp.result_ok = true
-                Log.w("Ble scan: ", "BLE enabled OK!")
+                Log.w(LOG_PREFIX, "Ble scan: BLE enabled OK!")
             } else {
                 state_new.state_idx = 999 // next state. fail.
-                Log.w("Ble scan: ", "BLE enabled FAILURE!")
+                Log.w(LOG_PREFIX, "Ble scan: BLE enabled FAILURE!")
             }
             state_previous = state_tmp
             state_current = state_new
 
         } else if ( state_tmp.state_idx == 2 ) {
-            Log.w("Ble scan: ", "Location permission?")
+            Log.w(LOG_PREFIX, "Ble scan: Location permission?")
             val state_new = BleStateType()
             if ( isLocationPermissionGranted ) {
                 state_new.state_idx = 3 // next state
                 state_tmp.result_ok = true
-                Log.w("Ble scan: ", "Location permission granted OK!")
+                Log.w(LOG_PREFIX, "Ble scan: Location permission granted OK!")
             } else {
                 state_new.state_idx = 999 // next state. fail.
-                Log.w("Ble scan: ", "Location permission FAILURE!")
+                Log.w(LOG_PREFIX, "Ble scan: Location permission FAILURE!")
             }
             state_previous = state_tmp
             state_current = state_new
 
         } else if ( state_tmp.state_idx == 3 ) {
-            Log.w("Ble scan: ", "Scanning ...")
+            Log.w(LOG_PREFIX, "Ble scan: Scanning ...")
             if (state_tmp.state_phase == 0) {
                 scan_result_work?.clear_devices_list()
-                Log.w("Ble scan: ", "Start scanning ...")
+                Log.w(LOG_PREFIX, "Ble scan: Start scanning ...")
                 bleScanner.startScan(null, scanSettings, scanCallback)
                 is_scanning_in = true
                 state_tmp.state_phase = 1
@@ -616,7 +641,7 @@ class BleUtilOp : Service() {
                     val state_new = BleStateType()
                     state_new.state_idx = 4 // next state
                     state_tmp.result_ok = true
-                    Log.w("Ble scan: ", "Scanning finished OK!")
+                    Log.w(LOG_PREFIX, "Ble scan: Scanning finished OK!")
                     state_previous = state_tmp
                     state_current = state_new
                 } else {
@@ -630,7 +655,7 @@ class BleUtilOp : Service() {
             }
 
         } else if ( state_tmp.state_idx == 4 ) {
-            Log.w("Ble scan: ", "Connecting ...")
+            Log.w(LOG_PREFIX, "Ble scan: Connecting ...")
             if (state_tmp.state_phase == 0) {
 
                 val dev_list:MutableList<BleCenter_c>? = scan_result_work?.get_devices_list()?:null
@@ -651,7 +676,7 @@ class BleUtilOp : Service() {
                         connectGatt(null, false, gattCallback)
                     }
                     connect_trigger_request = true
-                    Log.w("Ble scan: ",
+                    Log.w(LOG_PREFIX, "Ble scan: " +
                             "Trigger connecting ... idx ${dev_sel} ... " +
                             "${dev.device_address} ${dev.device_name} ")
                     state_tmp.state_phase = 1
@@ -667,14 +692,14 @@ class BleUtilOp : Service() {
                     val state_new = BleStateType()
                     state_new.state_idx = 5 // next state
                     state_tmp.result_ok = true
-                    Log.w("Ble scan: ", "Wait connecting finished OK!")
+                    Log.w(LOG_PREFIX, "Ble scan: Wait connecting finished OK!")
                     state_previous = state_tmp
                     state_current = state_new
                 }
             }
 
         } else if ( state_tmp.state_idx == 5 ) {
-            Log.w("Ble discovery: ", "Trigger discovery ...")
+            Log.w(LOG_PREFIX, "Ble discovery: Trigger discovery ...")
             if (state_tmp.state_phase == 0) {
                 val conn_gatt_tmp = connect_gatt
                 if (conn_gatt_tmp != null) {
@@ -684,7 +709,7 @@ class BleUtilOp : Service() {
                 } else {
                     val state_new = BleStateType()
                     state_new.state_idx = 999 // next state
-                    Log.w("Ble discovery: ", "Trigger discovery previous FAILURE!")
+                    Log.w(LOG_PREFIX, "Ble discovery: Trigger discovery previous FAILURE!")
                     state_previous = state_tmp
                     state_current = state_new
                 }
@@ -693,14 +718,14 @@ class BleUtilOp : Service() {
                     val state_new = BleStateType()
                     state_new.state_idx = 6 // next state
                     state_tmp.result_ok = true
-                    Log.w("Ble discovery: ", "Wait discovery finished OK!")
+                    Log.w(LOG_PREFIX, "Ble discovery: Wait discovery finished OK!")
                     state_previous = state_tmp
                     state_current = state_new
                 }
             }
 
         } else if ( state_tmp.state_idx == 6 ) {
-            Log.w("Ble mtu: ", "Trigger mtu ...")
+            Log.w(LOG_PREFIX, "Ble mtu: Trigger mtu ...")
             if (state_tmp.state_phase == 0) {
                 val conn_gatt_tmp = connect_gatt
                 if ( conn_gatt_tmp != null ) {
@@ -710,7 +735,7 @@ class BleUtilOp : Service() {
                 } else {
                     val state_new = BleStateType()
                     state_new.state_idx = 999 // next state
-                    Log.w("Ble mtu: ", "Trigger mtu previous FAILURE!")
+                    Log.w(LOG_PREFIX, "Ble mtu: Trigger mtu previous FAILURE!")
                     state_previous = state_tmp
                     state_current = state_new
                 }
@@ -719,14 +744,14 @@ class BleUtilOp : Service() {
                     val state_new = BleStateType()
                     state_new.state_idx = 7 // next state
                     state_tmp.result_ok = true
-                    Log.w("Ble mtu: ", "Wait mtu finished OK!")
+                    Log.w(LOG_PREFIX, "Ble mtu: Wait mtu finished OK!")
                     state_previous = state_tmp
                     state_current = state_new
                 }
             }
 
         } else if ( state_tmp.state_idx == 7 ) {
-            Log.w("Ble subscription: ", "Trigger subscription ...")
+            Log.w(LOG_PREFIX, "Ble subscription: Trigger subscription ...")
             var failed = 0
             if (state_tmp.state_phase == 0) {
                 val conn_gatt_tmp = connect_gatt
@@ -743,22 +768,22 @@ class BleUtilOp : Service() {
             if ( failed == 0 ) {
                 state_new.state_idx = 8 // next state
                 state_tmp.result_ok = true
-                Log.w("Ble mtu: ", "Wait subscription finished OK!")
+                Log.w(LOG_PREFIX, "Ble mtu: Wait subscription finished OK!")
             } else {
                 state_new.state_idx = 999 // next state
-                Log.w("Ble mtu: ", "Wait subscription FAILURE!")
+                Log.w(LOG_PREFIX, "Ble mtu: Wait subscription FAILURE!")
             }
             state_previous = state_tmp
             state_current = state_new
 
         } else if ( state_tmp.state_idx == 8 ) {
-            Log.w("Ble data: ", "Trigger data read and write ...")
+            Log.w(LOG_PREFIX, "Ble data: Trigger data read and write ...")
             var failed = false
             if (state_tmp.state_phase == 0) {
                 val conn_gatt_tmp = connect_gatt
                 if ( conn_gatt_tmp != null ) {
                     data_read_record = null /* init to invaid */
-                    Log.w("Ble data: ", "Trigger write ...")
+                    Log.w(LOG_PREFIX, "Ble data: Trigger write ...")
                     //bleDataRead_user()
                     bleDataWrite_user()
                     state_tmp.state_phase = 1
@@ -766,37 +791,37 @@ class BleUtilOp : Service() {
                     failed = true
                 }
             } else if (state_tmp.state_phase == 1) {
-                Log.w("Ble data: ", "Wait data read ...")
+                Log.w(LOG_PREFIX, "Ble data: Wait data read ...")
                 if ( data_read_record != null ) {
-                    Log.w("Ble data: ", "Received data ...")
+                    Log.w(LOG_PREFIX, "Ble data: Received data ...")
                     data_read_record = null
                 }
             }
             if ( failed ) {
                 val state_new = BleStateType()
                 state_new.state_idx = 999 // next state
-                Log.w("Ble data: ", "Data failed with FAILURE!")
+                Log.w(LOG_PREFIX, "Ble data: Data failed with FAILURE!")
                 state_previous = state_tmp
                 state_current = state_new
             }
 
         } else if ( state_tmp.state_idx == 999 ) {
             if ( state_tmp.state_phase != 999 ) {
-                Log.e("Ble state: ",
+                Log.e(LOG_PREFIX, "Ble state: " +
                       "Previous state ${state_previous?.state_idx?:-9992} " +
                               "phase ${state_previous?.state_phase?:-9992}")
                 state_tmp.state_phase = 999
             }
         } else {
-            Log.e("Ble state: ",
+            Log.e(LOG_PREFIX, "Ble state: " +
                 "Previous state ${state_previous?.state_idx?:-9993} " +
                         "phase ${state_previous?.state_phase?:-9993}")
-            Log.e("Ble state: ",
+            Log.e(LOG_PREFIX,"Ble state: " +
                 "Current state ${state_current?.state_idx?:-9993} " +
                         "phase ${state_current?.state_phase?:-9993}")
             val state_new = BleStateType()
             state_new.state_idx = 999 // next state
-            Log.w("Ble state: ", "Unknown state  failed with FAILURE!")
+            Log.w(LOG_PREFIX, "Ble state: Unknown state  failed with FAILURE!")
             state_previous = state_tmp
             state_current = state_new
         }
@@ -833,7 +858,7 @@ class BleUtilOp : Service() {
         if ( start_count >= 3 ) {
             progress_ble_actions()
         }
-        Log.w("User service: ", String.format("on-start() ${start_count}"))
+        Log.w(LOG_PREFIX, "User service: " + String.format("on-start() ${start_count}"))
 
         // returns the status
         // of the program
@@ -859,7 +884,7 @@ class BleUtilOp : Service() {
             connect_trigger_request = false
         }
 
-        Log.w("User service: ", "on-destroy()")
+        Log.w(LOG_PREFIX, "User service: on-destroy()")
     }
 
 
@@ -869,7 +894,7 @@ class BleUtilOp : Service() {
      */
     override fun onCreate() {
         super.onCreate()
-        Log.d("MyBoundService", "onCreate called")
+        Log.d(LOG_PREFIX, "MyBoundService: onCreate called")
 
         //startNotification()
 
