@@ -1,3 +1,11 @@
 # Default ignored files
 /shelf/
 /workspace.xml
+
+# an error by vcs.xml
+/vcs.xml
+
+# to ignore more changes, run 
+#       git update-index --skip-worktree gradle.xml misc.xml
+#
+
