@@ -8,16 +8,17 @@ class BleUtilData {
         return ble_uuid
     }
 /*
+I/BluetoothGattCallback: Discovered 3 services for CC:11:22:33:44:AA
 I/printGattTable: Service 00001801-0000-1000-8000-00805f9b34fb
     Characteristics:
-    |--00002a05-0000-1000-8000-00805f9b34fb
+    |--00002a05-0000-1000-8000-00805f9b34fb  <<<<pca10040 nus does not have this characteristic
 I/printGattTable: Service 00001800-0000-1000-8000-00805f9b34fb
     Characteristics:
     |--00002a00-0000-1000-8000-00805f9b34fb
     |--00002a01-0000-1000-8000-00805f9b34fb
     |--00002a04-0000-1000-8000-00805f9b34fb
     |--00002aa6-0000-1000-8000-00805f9b34fb
-    Service 00000001-0002-0003-0004-1234567890ab
+I/printGattTable: Service 00000001-0002-0003-0004-1234567890ab
     Characteristics:
     |--00000002-0002-0003-0004-1234567890ab
     |--00000003-0002-0003-0004-1234567890ab

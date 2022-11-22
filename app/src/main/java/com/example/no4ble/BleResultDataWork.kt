@@ -100,7 +100,7 @@ class BleResultDataWork_c (val result_data:BleResultData_c) {
 
         val sz = result_data.devices.size
         var ret_valid:Boolean = true
-        if ( sz < 2 ) {
+        if ( sz < 1 ) {
             ret_valid = false
         }
         for ( idx in 0..(sz-1) ) {
