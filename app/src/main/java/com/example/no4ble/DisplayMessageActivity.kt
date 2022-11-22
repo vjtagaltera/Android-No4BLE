@@ -78,6 +78,7 @@ class DisplayMessageActivity : AppCompatActivity() {
     fun onClick(v: View?) {
         when (v?.id) {
             R.id.buttonStartService -> {
+                click_start_count ++
                 bindService()
             }
             R.id.buttonStopService -> {
@@ -109,6 +110,7 @@ class DisplayMessageActivity : AppCompatActivity() {
     private var call_cnt = 0
     private var call_msg = "msg0\n"
     private val call_this = this
+    private var click_start_count = 0
 
     fun calculate_content():String {
         val numbers = listOf(1, 2, 3, 4, 5, 6)
@@ -140,11 +142,33 @@ class DisplayMessageActivity : AppCompatActivity() {
             if ( dev_valid ) vld = "list-valid"
             retv = retv + String.format(" ${vld}  sel=${dev_sel}, sz=${sz}\n")
             retv = retv + String.format("\n")
+
+            val conn_trig:Boolean = mService?.get_progress_connect_trigger()?:false
+            val conn_fail:Boolean = mService?.get_progress_connect_failed()?:false
+            val conn_ok:Boolean = mService?.get_progress_connect_ok()?:false
+            if ( conn_trig ) {
+                if (conn_fail) {
+                    retv = retv + String.format(" connection requested and failed\n")
+                    retv = retv + String.format("\n")
+                } else if (conn_ok) {
+                    retv = retv + String.format(" connection requested and connected ok\n")
+                    retv = retv + String.format("\n")
+                } else {
+                    retv = retv + String.format(" connection requested\n")
+                    retv = retv + String.format("\n")
+                }
+            }
+            val recv_data:String? = mService?.get_progress_received_data()
+            if ( recv_data != null ) {
+                retv = retv + String.format(" received data ${recv_data}\n")
+                retv = retv + String.format("\n")
+            }
         } else {
             retv = retv + String.format("data_worker: null\n")
         }
 
         retv = retv + String.format("\n")
+        retv = retv + String.format("start_cnt: ${click_start_count}\n")
         retv = retv + String.format("call_cnt: ${call_cnt}\n")
         call_cnt ++
 
@@ -173,7 +197,7 @@ class DisplayMessageActivity : AppCompatActivity() {
                 }
             }
 
-            mainHandler.postDelayed(this, 2000)
+            mainHandler.postDelayed(this, 1000)
             Log.w(LOG_PREFIX, "User message: handler-run()")
         }
     }

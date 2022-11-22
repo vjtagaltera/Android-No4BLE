@@ -135,12 +135,14 @@ class BleUtilOp : Service() {
     private var scan_result_work: BleResultDataWork_c? = null
 
     private var connect_trigger_request = false
+    private var connect_trigger_failed = false
     private var connect_gatt: BluetoothGatt? = null /* set when connected */
 
     private var service_discovered = false
     private var service_mtu = 20 /* default 23, 23 - 3 user usable. 3 att header. */
 
     private var data_read_record:String? = null
+    private var data_received_history:String? = null
 
 
     private val bluetoothAdapter: BluetoothAdapter by lazy {
@@ -245,6 +247,7 @@ class BleUtilOp : Service() {
                  */
                 gatt.close()
                 connect_gatt = null
+                connect_trigger_failed = true
             }
         }
 
@@ -366,6 +369,7 @@ class BleUtilOp : Service() {
                 Log.i(LOG_PREFIX,
                     "BluetoothGattCallback: " +
                     "Characteristic $uuid changed | value: ${value.toHexString()}")
+                data_read_record = value.toHexString()
             }
         }
     }
@@ -582,6 +586,25 @@ class BleUtilOp : Service() {
         }
     }
 
+    fun get_progress_connect_trigger():Boolean {
+        return connect_trigger_request
+    }
+
+    fun get_progress_connect_failed():Boolean {
+        return connect_trigger_failed
+    }
+
+    fun get_progress_connect_ok():Boolean {
+        if ( connect_gatt != null ) {
+            return true
+        }
+        return false
+    }
+
+    fun get_progress_received_data():String? {
+        return data_received_history
+    }
+
     fun progress_ble_actions():BleResultDataWork_c? {
         val state_tmp: BleStateType? = state_current
         if ( state_tmp == null ) {
@@ -794,6 +817,11 @@ class BleUtilOp : Service() {
                 Log.w(LOG_PREFIX, "Ble data: Wait data read ...")
                 if ( data_read_record != null ) {
                     Log.w(LOG_PREFIX, "Ble data: Received data ...")
+                    if (data_received_history != null) {
+                        data_received_history += data_read_record
+                    } else {
+                        data_received_history = data_read_record
+                    }
                     data_read_record = null
                 }
             }
