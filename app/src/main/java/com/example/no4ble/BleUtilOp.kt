@@ -178,11 +178,16 @@ class BleUtilOp : Service() {
                 //      "Found BLE device! Address: ${device}, Name: ${scanRecord?:"Unnamed"}")
                 var rec: ScanRecord? = this.scanRecord
                 var vnam: String = "<no-name>"
+                var vflag: Int? = null
                 var src_uuid: List<ParcelUuid>? = null
                 if ( rec != null ) {
                     val tmp_nam = rec.getDeviceName()
                     if ( tmp_nam != null ) {
                         vnam = tmp_nam
+                    }
+                    val tmp_flag:Int = rec.getAdvertiseFlags()
+                    if (tmp_flag >= 0) {
+                        vflag = tmp_flag
                     }
                     src_uuid = rec.getServiceUuids()
                 }
@@ -203,6 +208,7 @@ class BleUtilOp : Service() {
                         "Found BLE device! Address: ${dev_addr}, " +
                                 "Name: ${vnam}, " +
                                 "RSSI: ${vrssi}, " +
+                                "flag: ${vflag}, " +
                                 "Uuid: ${vuuid}")
                     break /* scope */
                 }
@@ -696,7 +702,13 @@ class BleUtilOp : Service() {
                         /* search: android connectGatt context
                            ref: https://stackoverflow.com/questions/56642912/why-android-bluetoothdevice-conenctgatt-require-context-if-it-not-use-it
                          */
-                        connectGatt(null, false, gattCallback)
+                        connectGatt(null, false, gattCallback,
+                                    /* search: android ble error 133
+                                     * medium.com: making android ble work -- part 2
+                                     * stackoverflow.com: android-bluetoothgatt-status-133-register-callback
+                                     * github.com/dotintent/FlutterBleLib/issues/565: need api 23
+                                     */
+                                    BluetoothDevice.TRANSPORT_LE)
                     }
                     connect_trigger_request = true
                     Log.w(LOG_PREFIX, "Ble scan: " +

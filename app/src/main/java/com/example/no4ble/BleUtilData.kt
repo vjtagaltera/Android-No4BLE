@@ -2,10 +2,10 @@ package com.example.no4ble
 
 class BleUtilData {
     //private val ble_uuid = "[00000001-0002-0003-0004-1234567890ab]"
-    private val ble_uuid = "[6e400001-b5a3-f393-e0a9-e50e24dcca9e]" /* nordic nus */
+    private val ble_uuid = "6e400001-b5a3-f393-e0a9-e50e24dcca9e" /* nordic nus */
 
     fun getUuid():String {
-        return ble_uuid
+        return "[" + ble_uuid + "]"
     }
 /*
 I/BluetoothGattCallback: Discovered 3 services for CC:11:22:33:44:AA
@@ -23,7 +23,7 @@ I/printGattTable: Service 00000001-0002-0003-0004-1234567890ab
     |--00000002-0002-0003-0004-1234567890ab
     |--00000003-0002-0003-0004-1234567890ab
  */
-    private val svc_user = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
+    private val svc_user = ble_uuid /* "6e400001-b5a3-f393-e0a9-e50e24dcca9e" */
     private val char_wr = "6e400002-b5a3-f393-e0a9-e50e24dcca9e" /* incoming into the peripheral */
     private val char_rd = "6e400003-b5a3-f393-e0a9-e50e24dcca9e"
     private val char_rd_ccc = "00002902-0000-1000-8000-00805f9b34fb"
