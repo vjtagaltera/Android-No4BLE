@@ -79,6 +79,9 @@ class DisplayMessageActivity : AppCompatActivity() {
         when (v?.id) {
             R.id.buttonStartService -> {
                 click_start_count ++
+                if ( click_path_state == 0 ) {
+                    click_path_state = 1
+                }
                 bindService()
             }
             R.id.buttonStopService -> {
@@ -87,6 +90,7 @@ class DisplayMessageActivity : AppCompatActivity() {
                     mIsBound = false
                     mBleDataWorker = null
                 }
+                click_path_state = 0
             }
             //R.id.startActivityButton -> {
             //    val intent = Intent(this, ResultActivity::class.java)
@@ -111,6 +115,10 @@ class DisplayMessageActivity : AppCompatActivity() {
     private var call_msg = "msg0\n"
     private val call_this = this
     private var click_start_count = 0
+    private var click_path_state = 0 /* track click path */
+    private var click_connect_ok_count = 0
+    private var click_connect_fail_count = 0
+    private var click_data_ok_count = 0
 
     fun calculate_content():String {
         val numbers = listOf(1, 2, 3, 4, 5, 6)
@@ -150,9 +158,17 @@ class DisplayMessageActivity : AppCompatActivity() {
                 if (conn_fail) {
                     retv = retv + String.format(" connection requested and failed\n")
                     retv = retv + String.format("\n")
+                    if ( click_path_state == 1 ) {
+                        click_connect_fail_count ++
+                        click_path_state = 2
+                    }
                 } else if (conn_ok) {
                     retv = retv + String.format(" connection requested and connected ok\n")
                     retv = retv + String.format("\n")
+                    if ( click_path_state == 1 ) {
+                        click_connect_ok_count ++
+                        click_path_state = 2
+                    }
                 } else {
                     retv = retv + String.format(" connection requested\n")
                     retv = retv + String.format("\n")
@@ -162,13 +178,21 @@ class DisplayMessageActivity : AppCompatActivity() {
             if ( recv_data != null ) {
                 retv = retv + String.format(" received data ${recv_data}\n")
                 retv = retv + String.format("\n")
+                if ( click_path_state == 2 ) {
+                    click_data_ok_count ++
+                    click_path_state = 3
+                }
             }
         } else {
             retv = retv + String.format("data_worker: null\n")
         }
 
         retv = retv + String.format("\n")
-        retv = retv + String.format("start_cnt: ${click_start_count}\n")
+        retv = retv + String.format("counts:  start=${click_start_count}, ")
+        retv += String.format(" connect_fail=${click_connect_fail_count}, \n")
+        retv += String.format("                             ")
+        retv += String.format(" connect_ok=${click_connect_ok_count}, ")
+        retv += String.format(" data_ok=${click_data_ok_count}\n")
         retv = retv + String.format("call_cnt: ${call_cnt}\n")
         call_cnt ++
 
