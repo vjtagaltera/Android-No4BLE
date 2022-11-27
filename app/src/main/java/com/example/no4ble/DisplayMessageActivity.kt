@@ -233,7 +233,11 @@ class DisplayMessageActivity : AppCompatActivity() {
         if ( ! cfg_use_bound_service ) {
             stopService(Intent(this, BleUtilOp::class.java))
         } else {
-            unbindService()
+            if (mIsBound == true) {
+                unbindService()
+                mIsBound = false
+                mBleDataWorker = null
+            }
         }
 
         Log.w(LOG_PREFIX, "User message: onDestroy()")
