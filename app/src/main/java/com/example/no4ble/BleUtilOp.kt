@@ -13,11 +13,8 @@ import android.bluetooth.le.ScanRecord
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.pm.PackageManager
-import android.os.Binder
-import android.os.Build
+import android.os.*
 import androidx.appcompat.app.AppCompatActivity
-import android.os.IBinder
-import android.os.ParcelUuid
 import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -113,6 +110,13 @@ class BleUtilOp : Service() {
     }
 
 
+    // search android post message from callback to main thread
+    // stackoverflow correct-way-to-communicate-the-result-of-a-background-thread-to-the-ui-thread-in
+    // here: create a handler that associated with Looper of the main thread
+    // later: send a task to the MessageQueue of the main thread
+    private val mainHandler: Handler = Handler(Looper.getMainLooper())
+
+
     private val ENABLE_BLUETOOTH_REQUEST_CODE = 1
     private val GATT_MAX_MTU_SIZE = 517
 
@@ -161,6 +165,7 @@ class BleUtilOp : Service() {
     /* scan callback */
     private val scanCallback: ScanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
+            /* note: it runs on the main thread */
             //Log.w("ScanCallback: ", "$callbackType $result")
             /* 1
                ScanResult{device=12:34:56:78:90:ab,
@@ -229,7 +234,9 @@ class BleUtilOp : Service() {
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             val deviceAddress = gatt.device.address
-
+            Log.w(LOG_PREFIX,
+                "BluetoothGattCallback: post connection to $deviceAddress")
+            mainHandler.post ( object:Runnable { override fun run() {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
                     Log.w(LOG_PREFIX,
@@ -255,6 +262,7 @@ class BleUtilOp : Service() {
                 connect_gatt = null
                 connect_trigger_failed = true
             }
+            }})
         }
 
         private fun BluetoothGatt.printGattTable() {
@@ -281,29 +289,42 @@ class BleUtilOp : Service() {
             with(gatt) {
                 Log.w(LOG_PREFIX,
                     "BluetoothGattCallback: " +
+                            "post Discovered ${services.size} services for ${device.address}"
+                )
+                mainHandler.post ( object:Runnable { override fun run() {
+                Log.w(LOG_PREFIX,
+                    "BluetoothGattCallback: " +
                     "Discovered ${services.size} services for ${device.address}"
                 )
                 printGattTable() // See implementation just above this section
                 // Consider connection setup as complete here
                 service_discovered = true
+                }})
             }
         }
 
         override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
+            Log.w(LOG_PREFIX,
+                "BluetoothGattCallback: post Ble MTU: " +
+                        "GATT MTU changed to $mtu, success: " +
+                        "${status == BluetoothGatt.GATT_SUCCESS}"
+            )
+            mainHandler.post ( object:Runnable { override fun run() {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 service_mtu = mtu
                 Log.w(LOG_PREFIX,
-                    "Ble MTU: " +
-                    "ATT MTU changed to $mtu, success: " +
+                    "BluetoothGattCallback: Ble MTU: " +
+                    "GATT MTU changed to $mtu, success: " +
                             "${status == BluetoothGatt.GATT_SUCCESS}"
                 )
             } else {
                 Log.e(LOG_PREFIX,
-                    "Ble MTU: " +
-                    "ATT MTU failed to change to $mtu, success: " +
+                    "BluetoothGattCallback: Ble MTU: " +
+                    "GATT MTU failed to change to $mtu, success: " +
                             "${status == BluetoothGatt.GATT_SUCCESS}"
                 )
             }
+            }})
         }
         /* requesting 517 on ble 4.2 will get a reply for 247:
             D/BluetoothGatt: configureMTU() - device: 12:34:56:78:90:ab mtu: 517
@@ -317,6 +338,7 @@ class BleUtilOp : Service() {
                                           characteristic: BluetoothGattCharacteristic,
                                           status: Int )
         {
+            /*TODO: not used. need to post to main thread */
             with(characteristic) {
                 when (status) {
                     BluetoothGatt.GATT_SUCCESS -> {
@@ -344,8 +366,13 @@ class BleUtilOp : Service() {
                                            characteristic: BluetoothGattCharacteristic,
                                            status: Int)
         {
+            Log.i(LOG_PREFIX,
+                "BluetoothGattCallback: " +
+                        "post Wrote to characteristic")
+            mainHandler.post ( object:Runnable { override fun run() {
             with(characteristic) {
                 when (status) {
+
                     BluetoothGatt.GATT_SUCCESS -> {
                         Log.i(LOG_PREFIX,
                             "BluetoothGattCallback: " +
@@ -366,17 +393,23 @@ class BleUtilOp : Service() {
                     }
                 }
             }
+            }})
         }
 
         override fun onCharacteristicChanged(gatt: BluetoothGatt,
                                              characteristic: BluetoothGattCharacteristic)
         {
+            Log.i(LOG_PREFIX,
+                "BluetoothGattCallback: " +
+                        "post Characteristic changed")
+            mainHandler.post ( object:Runnable { override fun run() {
             with(characteristic) {
                 Log.i(LOG_PREFIX,
                     "BluetoothGattCallback: " +
                     "Characteristic $uuid changed | value: ${value.toHexString()}")
                 data_read_record = value.toHexString()
             }
+            }})
         }
     }
 
